@@ -1,6 +1,6 @@
 /**
  * elasticlunr - http://weixsong.github.io
- * Lightweight full-text search engine in Javascript for browser search and offline search. - 0.9.5
+ * Lightweight full-text search engine in Javascript for browser search and offline search. - 0.9.6
  *
  * Copyright (C) 2017 Oliver Nightingale
  * Copyright (C) 2017 Wei Song
@@ -83,7 +83,7 @@ var elasticlunr = function (config) {
   return idx;
 };
 
-elasticlunr.version = "0.9.5";
+elasticlunr.version = "0.9.6";
 
 // only used this to make elasticlunr.js compatible with lunr-languages
 // this is a trick to define a global alias of elasticlunr
@@ -908,6 +908,7 @@ elasticlunr.Index.prototype.search = function (query, userConfig) {
   }
 
   var queryResults = {};
+  var queryFieldResults = {};
 
   for (var field in config) {
     var tokens = queryTokens[field] || queryTokens.any;
@@ -920,13 +921,17 @@ elasticlunr.Index.prototype.search = function (query, userConfig) {
 
     for (var docRef in fieldSearchResults) {
       fieldSearchResults[docRef] = fieldSearchResults[docRef] * fieldBoost;
-    }
 
-    for (var docRef in fieldSearchResults) {
       if (docRef in queryResults) {
         queryResults[docRef] += fieldSearchResults[docRef];
       } else {
         queryResults[docRef] = fieldSearchResults[docRef];
+      }
+
+      if (docRef in queryFieldResults) {
+        queryFieldResults[docRef].push(field);
+      } else {
+        queryFieldResults[docRef] = [field];
       }
     }
   }
@@ -938,6 +943,8 @@ elasticlunr.Index.prototype.search = function (query, userConfig) {
     if (this.documentStore.hasDoc(docRef)) {
       result.doc = this.documentStore.getDoc(docRef);
     }
+
+    result.matchedFields = queryFieldResults[docRef];
     results.push(result);
   }
 
